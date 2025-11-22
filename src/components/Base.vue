@@ -1,13 +1,9 @@
 <template>
-  <div
-    class="baseBeverage"
-    :style="{ backgroundColor: beverageStore.currentBase?.color }"
-  ></div>
+  <div class="baseBeverage" :style="{ backgroundColor: beverageStore.currentBase?.color }"></div>
 </template>
 
 <script setup lang="ts">
 import { useBeverageStore } from "../stores/beverageStore";
-
 const beverageStore = useBeverageStore();
 </script>
 

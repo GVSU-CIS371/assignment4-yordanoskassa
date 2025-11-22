@@ -10,11 +10,7 @@ import db from "../firebase.ts";
 import {
   collection,
   getDocs,
-  setDoc,
-  doc,
-  QuerySnapshot,
-  QueryDocumentSnapshot,
-  onSnapshot,
+  addDoc,
 } from "firebase/firestore";
 
 export const useBeverageStore = defineStore("BeverageStore", {
@@ -33,9 +29,85 @@ export const useBeverageStore = defineStore("BeverageStore", {
   }),
 
   actions: {
-    init() {},
-    makeBeverage() {},
+    async init() {
+      try {
+        // Load bases collection
+        const basesSnapshot = await getDocs(collection(db, "bases"));
+        this.bases = basesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as BaseBeverageType));
 
-    showBeverage() {},
+        // Load creamers collection
+        const creamersSnapshot = await getDocs(collection(db, "creamers"));
+        this.creamers = creamersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as CreamerType));
+
+        // Load syrups collection
+        const syrupsSnapshot = await getDocs(collection(db, "syrups"));
+        this.syrups = syrupsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as SyrupType));
+
+        // Set default values
+        this.currentBase = this.bases[0] || null;
+        this.currentCreamer = this.creamers[0] || null;
+        this.currentSyrup = this.syrups[0] || null;
+
+        // Load existing beverages
+        const beveragesSnapshot = await getDocs(collection(db, "beverages"));
+        this.beverages = beveragesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as BeverageType));
+
+      } catch (error) {
+        console.error("Error initializing store:", error);
+      }
+    },
+
+    async makeBeverage() {
+      if (!this.currentBase || !this.currentCreamer || !this.currentSyrup || !this.currentName.trim()) {
+        console.error("Missing required beverage components");
+        return;
+      }
+
+      try {
+        const newBeverage: Omit<BeverageType, 'id'> = {
+          name: this.currentName,
+          base: this.currentBase,
+          creamer: this.currentCreamer,
+          syrup: this.currentSyrup,
+          temp: this.currentTemp,
+          createdAt: new Date().toISOString()
+        };
+
+        const docRef = await addDoc(collection(db, "beverages"), newBeverage);
+        
+        // Add to local state
+        this.beverages.push({
+          id: docRef.id,
+          ...newBeverage
+        } as BeverageType);
+
+        // Clear the current name
+        this.currentName = "";
+        
+        console.log("Beverage saved successfully!");
+      } catch (error) {
+        console.error("Error saving beverage:", error);
+      }
+    },
+
+    showBeverage(beverage: BeverageType) {
+      this.currentBeverage = beverage;
+      this.currentBase = beverage.base;
+      this.currentCreamer = beverage.creamer;
+      this.currentSyrup = beverage.syrup;
+      this.currentTemp = beverage.temp;
+    },
   },
 });

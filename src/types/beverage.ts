@@ -23,5 +23,6 @@ type BeverageType = {
   base: BaseBeverageType;
   syrup: SyrupType;
   creamer: CreamerType;
+  createdAt?: string;
 };
 export type { BaseBeverageType, CreamerType, SyrupType, BeverageType };
